@@ -243,11 +243,7 @@
 .chat-queue__edit-cancel svg {
   width: 14px;
   height: 14px;
-  fill: none;
-  stroke: currentColor;
   stroke-width: 1.75px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .chat-queue__item--failed .chat-queue__leading {
@@ -392,11 +388,7 @@
 .chat-queue__retry svg {
   width: 12px;
   height: 12px;
-  fill: none;
-  stroke: currentColor;
   stroke-width: 1.75px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .chat-queue__action:hover:not(:disabled),

@@ -293,11 +293,7 @@ select.settings-select:focus-visible {
 .settings-secret__toggle svg {
   width: 16px;
   height: 16px;
-  fill: none;
-  stroke: currentColor;
   stroke-width: 2px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 /* Quiet count badge used by settings pages and the Skill Workshop. */

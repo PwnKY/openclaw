@@ -630,11 +630,7 @@
 .plugins-tile--fallback svg {
   width: 21px;
   height: 21px;
-  fill: none;
-  stroke: currentColor;
   stroke-width: 1.6px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .plugins-row-message {

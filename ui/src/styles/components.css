@@ -1125,14 +1125,32 @@ openclaw-session-owner-chip .viewer-avatar__initials {
 
 .btn svg,
 .compaction-indicator svg,
+.chat-scroll-to-bottom svg,
+.btn--icon svg,
+.agent-select__chevron svg,
+.agent-select__avatar--icon svg,
+.session-row-badge svg,
+.session-action svg,
+.chat-queue__leading svg,
+.chat-queue__remove svg,
+.chat-queue__edit-submit svg,
+.chat-queue__edit-cancel svg,
+.chat-queue__action svg,
+.chat-queue__retry svg,
+.plugins-tile--fallback svg,
+.settings-secret__toggle svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.btn svg,
+.compaction-indicator svg,
 .chat-scroll-to-bottom svg {
   width: 16px;
   height: 16px;
-  stroke: currentColor;
-  fill: none;
   stroke-width: 1.5px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
   flex-shrink: 0;
 }
 
@@ -1414,11 +1432,7 @@ openclaw-toast-host[data-toast-placement="shell"]
   display: block;
   width: 18px;
   height: 18px;
-  stroke: currentColor;
-  fill: none;
   stroke-width: 1.5px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 openclaw-link-reader-hovercard-provider,
@@ -3633,11 +3647,7 @@ td.data-table-key-col {
 .agent-select__avatar--icon svg {
   width: 14px;
   height: 14px;
-  fill: none;
-  stroke: currentColor;
   stroke-width: 1.7px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .agent-select--compact .agent-select__trigger,
@@ -4581,11 +4591,7 @@ td.data-table-key-col {
 .session-row-badge svg {
   width: 12px;
   height: 12px;
-  stroke: currentColor;
-  fill: none;
   stroke-width: 1.6px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .session-row-actions {
@@ -4624,11 +4630,7 @@ td.data-table-key-col {
 .session-action svg {
   width: 14px;
   height: 14px;
-  stroke: currentColor;
-  fill: none;
   stroke-width: 1.6px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .session-action--touch-menu {
