@@ -323,7 +323,7 @@ describe("Memory overview request presentation", () => {
   const payload = (id: string): DoctorMemoryStatusPayload => ({
     agentId: id,
     embedding: { ok: false, checked: false },
-    embeddingRuntime: { state: "ready", engine: id },
+    embeddingRuntime: { state: "ready", engine: "llama.cpp", buildInfo: id },
   });
   async function settle(f: ReturnType<typeof fixture>, index: number, id: string) {
     f.pending[index]!.resolve(payload(id));

@@ -20,11 +20,14 @@ export const settingsViews: readonly ControlUiSettingsView[] = [
       let request: object | undefined;
       let reset = {};
       const [snapshot, setSnapshot] = createSignal(current, { ownedWrite: true });
-      const [receipt, setReceipt] = createSignal<{
-        result: Promise<DoctorMemoryStatusPayload | null>;
-        probe: boolean;
-        reset: object;
-      }>(undefined, { ownedWrite: true });
+      const [receipt, setReceipt] = createSignal<
+        | {
+            result: Promise<DoctorMemoryStatusPayload | null>;
+            probe: boolean;
+            reset: object;
+          }
+        | undefined
+      >(undefined, { ownedWrite: true });
       const scope = (value: ControlUiSettingsSnapshot) =>
         JSON.stringify([
           value.agentId,
