@@ -52,7 +52,11 @@ it("opens Discussion in the current presentation after a retained desktop header
   runtime.mobilePresentation.open = false;
   runtime.mobilePresentation.suspended = true;
   const mobile = renderHeader();
-  mobile.header.panelMenuActions?.find((action) => action.id === "discussion")?.onActivate();
+  const discussion = mobile.header.panelMenuActions?.find((action) => action.id === "discussion");
+  if (!discussion || discussion.kind === "status") {
+    throw new Error("expected the Discussion action");
+  }
+  discussion.onActivate();
 
   expect(runtime.mobilePresentation.open).toBe(true);
   expect(runtime.mobilePresentation.suspended).toBe(false);
