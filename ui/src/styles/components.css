@@ -2800,6 +2800,27 @@ select.settings-select:not([multiple]) {
   color: var(--text);
 }
 
+/* Row detail buttons stay chromeless and share the same focus ring. */
+.channels-item__detail,
+.plugins-item__detail-button,
+.session-bar-selection {
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: var(--cursor-action);
+}
+
+.channels-item__detail:focus-visible,
+.plugins-item__detail-button:focus-visible,
+.session-bar-selection:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
 .data-table-sort-button {
   padding: 0;
   border: 0;
