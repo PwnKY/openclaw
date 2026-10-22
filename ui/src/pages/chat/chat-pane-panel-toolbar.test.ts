@@ -26,7 +26,7 @@ import {
   isSidebarSlotVisible,
 } from "./sidebar-layout.ts";
 
-it("opens Discussion in the current presentation after a retained desktop header becomes mobile", () => {
+it("opens Discussion in the current presentation after a retained desktop header becomes mobile", async () => {
   const { pane, state } = createTestChatPane({
     client: createGatewayBrowserClientFixture(),
     sessions: createSessionCapabilityFixture(),
@@ -56,7 +56,7 @@ it("opens Discussion in the current presentation after a retained desktop header
   if (!discussion || discussion.kind === "status") {
     throw new Error("expected the Discussion action");
   }
-  discussion.onActivate();
+  await discussion.onActivate();
 
   expect(runtime.mobilePresentation.open).toBe(true);
   expect(runtime.mobilePresentation.suspended).toBe(false);
