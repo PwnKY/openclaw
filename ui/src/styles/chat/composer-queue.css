@@ -422,16 +422,7 @@
 .chat-queue__more,
 .chat-queue__edit-submit,
 .chat-queue__edit-cancel {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  border-radius: var(--radius-sm);
   background: none;
-  color: var(--muted);
   cursor: var(--cursor-action);
 }
 

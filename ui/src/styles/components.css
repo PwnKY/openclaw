@@ -1939,7 +1939,8 @@ select.input {
   }
 }
 
-.field select {
+.field select,
+select.settings-select:not([multiple]) {
   appearance: none;
   padding-right: 36px;
   background-image: var(--select-chevron);
@@ -1951,7 +1952,8 @@ select.input {
 }
 
 @media (forced-colors: active) {
-  .field select {
+  .field select,
+  select.settings-select:not([multiple]) {
     appearance: auto;
     padding-inline-end: 10px;
     background-image: none;
@@ -4569,7 +4571,13 @@ td.data-table-key-col {
   gap: 1px;
 }
 
-.session-action {
+/* Shared icon-button box; each surface retains positioning, paint, and state. */
+.session-action,
+.settings-secret__toggle,
+.chat-queue__remove,
+.chat-queue__more,
+.chat-queue__edit-submit,
+.chat-queue__edit-cancel {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4578,8 +4586,11 @@ td.data-table-key-col {
   padding: 0;
   border: none;
   border-radius: var(--radius-sm);
-  background: transparent;
   color: var(--muted);
+}
+
+.session-action {
+  background: transparent;
   opacity: 0;
   pointer-events: none;
   transition:
