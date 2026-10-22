@@ -236,21 +236,18 @@ export const agentsList: AgentsListResult = {
 };
 
 export function agentsRouteData(
-  currentGateway: ApplicationContext["gateway"],
+  _currentGateway: ApplicationContext["gateway"],
   roster: AgentsListResult | null = agentsList,
   requestedAgentId: string | null = "main",
   selection: ApplicationContext["settingsAgentSelection"] = settingsSelection(roster),
 ): AgentsRouteData {
   const pathname = requestedAgentId ? `/settings/agents/${requestedAgentId}` : "/settings/agents";
   return {
-    gateway: currentGateway,
-    gatewaySnapshot: currentGateway.snapshot,
     location: { pathname, search: "", hash: "" },
     requestedAgentId,
     settingsAgentSelection: selection,
     selectionIntentRevision: selection.intentRevision,
     panel: "files",
-    agentsList: roster,
   };
 }
 
