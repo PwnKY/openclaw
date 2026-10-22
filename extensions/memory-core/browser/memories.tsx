@@ -110,7 +110,7 @@ function MemoryMemories(props: MemoryMemoriesProps) {
       })
       .catch((error: unknown) => {
         if (searchRequest !== request || props.context.signal.aborted) {
-          return;
+          return undefined;
         }
         throw error;
       });
@@ -152,7 +152,7 @@ function MemoryMemories(props: MemoryMemoriesProps) {
       })
       .catch((error: unknown) => {
         if (detailRequests.get(path) !== request || props.context.signal.aborted) {
-          return;
+          return undefined;
         }
         // Failed reads are retried on reopen; pending and successful reads stay shared.
         detailRequests.delete(path);

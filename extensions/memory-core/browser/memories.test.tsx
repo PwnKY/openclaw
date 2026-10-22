@@ -82,7 +82,7 @@ const result = {
 function searchResponse(
   results: MemorySearchResponse["results"],
   overrides: Partial<MemorySearchResponse> = {},
-) {
+): MemorySearchResponse {
   return { agentId: "main", provider: "local", searchMode: "hybrid", results, ...overrides };
 }
 
