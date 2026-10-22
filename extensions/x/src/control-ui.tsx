@@ -1,7 +1,7 @@
 /** @jsxImportSource @solidjs/web */
 import { render } from "@solidjs/web";
 import { defineControlUiPlugin, type ControlUiView } from "openclaw/plugin-sdk/control-ui";
-import { createStore, For, Show } from "solid-js";
+import { createMemo, createStore, For, Show } from "solid-js";
 import type { XAllowlistSnapshot } from "./admin.js";
 import "./control-ui.css";
 
@@ -344,101 +344,109 @@ const mountXReplies: ControlUiView = (container, initialContext) => {
                     )}
                   </div>
                   <Show when={view.github}>
-                    {(github) => (
-                      <section class="x-replies__github" aria-labelledby="x-github-title">
-                        <h2 id="x-github-title">From GitHub</h2>
-                        <p>
-                          Verified through{" "}
-                          <a
-                            href={`https://github.com/${github().repo}`}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            {github().repo}
-                          </a>
-                          . To enable yourself, add your X handle to your GitHub profile.{" "}
-                          <a
-                            href="https://docs.openclaw.ai/channels/x#enable-yourself"
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            Profile setup
-                          </a>
-                        </p>
-                        <p class="x-replies__hint" role="status">
-                          {github().stale ? "Sync is stale. " : ""}
-                          {github().lastSyncAt !== undefined ? (
-                            <>
-                              Last successful sync:{" "}
-                              <time datetime={new Date(github().lastSyncAt).toISOString()}>
-                                {dateTime.format(github().lastSyncAt)}
-                              </time>
-                              . {github().stale ? "The last good set remains active. " : ""}
-                            </>
-                          ) : (
-                            "No successful sync yet."
-                          )}
-                          Entries update automatically and are read-only here.
-                        </p>
-                        {github().message ? (
-                          <p class="x-replies__error" role="alert">
-                            {host.redact(github().message)}
+                    {(github) => {
+                      const lastSync = createMemo(() => {
+                        const timestamp = github().lastSyncAt;
+                        return timestamp === undefined ? undefined : new Date(timestamp);
+                      });
+                      return (
+                        <section class="x-replies__github" aria-labelledby="x-github-title">
+                          <h2 id="x-github-title">From GitHub</h2>
+                          <p>
+                            Verified through{" "}
+                            <a
+                              href={`https://github.com/${github().repo}`}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              {github().repo}
+                            </a>
+                            . To enable yourself, add your X handle to your GitHub profile.{" "}
+                            <a
+                              href="https://docs.openclaw.ai/channels/x#enable-yourself"
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Profile setup
+                            </a>
                           </p>
-                        ) : null}
-                        {github().unresolvedHandles.length ? (
-                          <p class="x-replies__hint">
-                            Could not resolve on X:{" "}
-                            {github()
-                              .unresolvedHandles.map((handle) => `@${handle}`)
-                              .join(", ")}
-                            . Check the declared profiles.
+                          <p class="x-replies__hint" role="status">
+                            {github().stale ? "Sync is stale. " : ""}
+                            <Show when={lastSync()} fallback="No successful sync yet.">
+                              {(date) => (
+                                <>
+                                  Last successful sync:{" "}
+                                  <time datetime={date().toISOString()}>
+                                    {dateTime.format(date())}
+                                  </time>
+                                  . {github().stale ? "The last good set remains active. " : ""}
+                                </>
+                              )}
+                            </Show>
+                            Entries update automatically and are read-only here.
                           </p>
-                        ) : null}
-                        <div class="x-replies__list">
-                          {github().entries.length ? (
-                            <table>
-                              <thead>
-                                <tr>
-                                  <th>X account</th>
-                                  <th>GitHub account</th>
-                                  <th>Permission</th>
-                                  <th>Last sync</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <For each={github().entries} keyed={(row) => row.xUserId}>
-                                  {(entry) => (
-                                    <tr>
-                                      <td>
-                                        <strong>@{entry().xHandle}</strong>
-                                        <small>{entry().xUserId}</small>
-                                      </td>
-                                      <td>
-                                        <a
-                                          href={`https://github.com/${encodeURIComponent(entry().githubLogin)}`}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                        >
-                                          @{entry().githubLogin}
-                                        </a>
-                                      </td>
-                                      <td>{entry().permission}</td>
-                                      <td>
-                                        <time datetime={new Date(entry().syncedAt).toISOString()}>
-                                          {dateTime.format(entry().syncedAt)}
-                                        </time>
-                                      </td>
-                                    </tr>
-                                  )}
-                                </For>
-                              </tbody>
-                            </table>
-                          ) : (
-                            <p class="x-replies__empty">No GitHub-derived accounts yet.</p>
-                          )}
-                        </div>
-                      </section>
-                    )}
+                          <Show when={github().message}>
+                            {(message) => (
+                              <p class="x-replies__error" role="alert">
+                                {host.redact(message())}
+                              </p>
+                            )}
+                          </Show>
+                          {github().unresolvedHandles.length ? (
+                            <p class="x-replies__hint">
+                              Could not resolve on X:{" "}
+                              {github()
+                                .unresolvedHandles.map((handle) => `@${handle}`)
+                                .join(", ")}
+                              . Check the declared profiles.
+                            </p>
+                          ) : null}
+                          <div class="x-replies__list">
+                            {github().entries.length ? (
+                              <table>
+                                <thead>
+                                  <tr>
+                                    <th>X account</th>
+                                    <th>GitHub account</th>
+                                    <th>Permission</th>
+                                    <th>Last sync</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <For each={github().entries} keyed={(row) => row.xUserId}>
+                                    {(entry) => (
+                                      <tr>
+                                        <td>
+                                          <strong>@{entry().xHandle}</strong>
+                                          <small>{entry().xUserId}</small>
+                                        </td>
+                                        <td>
+                                          <a
+                                            href={`https://github.com/${encodeURIComponent(entry().githubLogin)}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                          >
+                                            @{entry().githubLogin}
+                                          </a>
+                                        </td>
+                                        <td>{entry().permission}</td>
+                                        <td>
+                                          <time datetime={new Date(entry().syncedAt).toISOString()}>
+                                            {dateTime.format(entry().syncedAt)}
+                                          </time>
+                                        </td>
+                                      </tr>
+                                    )}
+                                  </For>
+                                </tbody>
+                              </table>
+                            ) : (
+                              <p class="x-replies__empty">No GitHub-derived accounts yet.</p>
+                            )}
+                          </div>
+                        </section>
+                      );
+                    }}
                   </Show>
                   <p class="x-replies__hint">
                     {currentSnapshot().guests.enabled

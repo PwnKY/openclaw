@@ -22,13 +22,14 @@ const snapshot: XAllowlistSnapshot = {
   verifiedFromGitHub: {
     repo: "example/repository",
     stale: false,
+    lastSyncAt: 0,
     unresolvedHandles: [],
     entries: [
       {
         xUserId: "456",
         xHandle: "contributor",
         githubLogin: "contributor",
-        permission: "write",
+        permission: "push",
         syncedAt: 1,
       },
     ],
@@ -161,6 +162,7 @@ it("retires a failed read when hidden and restores only fresh administrator data
     flush();
     expect(f.container.textContent).toContain("@maintainer");
   });
+  expect(f.container.querySelector('time[datetime="1970-01-01T00:00:00.000Z"]')).not.toBeNull();
   f.connection.canAdmin = false;
   f.notify();
   flush();
