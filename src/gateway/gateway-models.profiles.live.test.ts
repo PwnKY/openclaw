@@ -6208,7 +6208,7 @@ describeLive("gateway live (dev agent, profile keys)", () => {
           saveAuthProfileStore(preparedDiscoveryAuthProfileStore, discoveryAgentDir);
         }
         logProgress("[all-models] preparing models.json");
-        const modelsJsonResult = await withGatewayLiveSetupTimeout(
+        await withGatewayLiveSetupTimeout(
           ensureOpenClawModelsJson(cfg, discoveryAgentDir, {
             workspaceDir,
             ...(providerList ? { providerDiscoveryProviderIds: providerList } : {}),
@@ -6219,7 +6219,7 @@ describeLive("gateway live (dev agent, profile keys)", () => {
           }),
           "[all-models] prepare models.json",
         );
-        const agentDir = modelsJsonResult.agentDir;
+        const agentDir = discoveryAgentDir;
         const providerScopedModelProviders = providerScopedModelRegistryProviders({
           providerList,
           useSmall,
