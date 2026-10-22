@@ -1123,7 +1123,9 @@ openclaw-session-owner-chip .viewer-avatar__initials {
   background: var(--secondary);
 }
 
-.btn svg {
+.btn svg,
+.compaction-indicator svg,
+.chat-scroll-to-bottom svg {
   width: 16px;
   height: 16px;
   stroke: currentColor;
