@@ -23,12 +23,11 @@ import {
   createTestGatewayScheduler,
 } from "../../test-utils/gateway-scheduler-clock.js";
 import { buildPreparedCliRunContext } from "../cli-runner.test-helpers.js";
-import { defaultCliWatchdogClock } from "./execute-plugin-watchdog.js";
+import * as pluginWatchdog from "./execute-plugin-watchdog.js";
 import { waitUntilAborted } from "./execute-plugin.test-support.js";
 import { executePreparedCliRun } from "./execute.js";
 import {
   createManagedRun,
-  setCliRunnerExecuteTestDeps,
   supervisorSpawnMock,
   wrapPreparedCliRunWithTestAdmission,
 } from "./execute.test-support.js";
@@ -152,7 +151,7 @@ afterEach(async () => {
   }
   testing.resetSessionControllerForTest();
   supervisorSpawnMock.mockReset();
-  setCliRunnerExecuteTestDeps({ watchdogClock: defaultCliWatchdogClock });
+  vi.restoreAllMocks();
   resetDiagnosticStateForTest();
   vi.useRealTimers();
 });
@@ -214,8 +213,11 @@ it("requests controller-owned recovery when compaction never ends", async () => 
     { diagnostics: { enabled: true } },
     { recoverStuckSession: recover, sampleLiveness: () => null },
   );
-  setCliRunnerExecuteTestDeps({
-    watchdogClock: { now: () => Date.now(), setTimeout: () => () => {} },
+  const createWatchdog = pluginWatchdog.createCliPluginWatchdog;
+  vi.spyOn(pluginWatchdog, "createCliPluginWatchdog").mockImplementationOnce((params) => {
+    const watchdog = createWatchdog(params);
+    watchdog.dispose();
+    return watchdog;
   });
   const flow = startCompaction(context);
   const startedAt = await flow.started.promise;

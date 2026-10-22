@@ -10,7 +10,10 @@ import { memorySessionActorOwners } from "../config/sessions/session-actor-memor
 import {
   areDiagnosticsEnabledForProcess,
   onDiagnosticEvent,
+  onInternalDiagnosticEvent,
   setDiagnosticsEnabledForProcess,
+  waitForDiagnosticEventsDrained,
+  type DiagnosticEventPayload,
 } from "../infra/diagnostic-events.js";
 import { createReplyOperation } from "../sessions/session-controller.operation.js";
 import { testing } from "../sessions/session-controller.test-support.js";
@@ -35,6 +38,7 @@ let state: OpenClawTestState;
 let diagnosticsEnabled: boolean;
 let clock: ReturnType<typeof createGatewaySchedulerClock>;
 let scheduler: ReturnType<typeof createTestGatewayScheduler>;
+let stopEvents: (() => void) | undefined;
 const reply = "synthetic current assistant reply";
 const privateReply = "synthetic memory-only assistant reply";
 const incognitoKey = "agent:heartbeat:dashboard:incognito-private";
@@ -77,6 +81,8 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+  stopEvents?.();
+  stopEvents = undefined;
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   testing.resetSessionControllerForTest();
@@ -171,6 +177,8 @@ it.each(["enabled", "disabled", "incognito"])(
     const enabled = label !== "disabled";
     vi.mocked(diagnosticLogger.isEnabled).mockReturnValue(enabled);
     const { sessionId, sessionKey } = session(label);
+    const events: DiagnosticEventPayload[] = [];
+    stopEvents = onInternalDiagnosticEvent((event) => events.push(event));
     const logged = createDeferred();
     const warn = vi.spyOn(diagnosticLogger, "warn").mockImplementation((message) => {
       if (message.startsWith(`stuck session: sessionId=${sessionId} `)) {
@@ -189,10 +197,21 @@ it.each(["enabled", "disabled", "incognito"])(
     ];
     await tick();
     await tick();
+    await waitForDiagnosticEventsDrained();
     expect(recover).toHaveBeenCalledOnce();
     expect(recover).toHaveBeenCalledWith(
-      expect.objectContaining({ operation, allowActiveAbort: true }),
+      expect.objectContaining({ sessionId, sessionKey, operation, allowActiveAbort: true }),
     );
+    if (enabled) {
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          type: "session.stuck",
+          sessionId,
+          sessionKey,
+          state: "processing",
+        }),
+      );
+    }
     if (enabled && label !== "incognito") {
       await logged.promise;
       for (const identity of [`sessionId=${sessionId}`, `sessionKey=${sessionKey}`]) {
