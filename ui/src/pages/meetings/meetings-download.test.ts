@@ -130,7 +130,12 @@ it("clears an export error during retry without replacing notes or download cont
       static override revokeObjectURL = vi.fn();
     },
   );
-  const download = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+  const downloads: string[] = [];
+  vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+    this: HTMLAnchorElement,
+  ) {
+    downloads.push(this.download);
+  });
   const { page, unmount } = mount(request, "?selector=meeting");
   try {
     await waitForSolid(() => expect(page.textContent).toContain("Reader layout discussed."));
@@ -150,7 +155,7 @@ it("clears an export error during retry without replacing notes or download cont
     retry.resolve({ data: btoa("Saved notes"), filename: "retry.md", mimeType: "text/markdown" });
     await waitForSolid(() => expect(page.textContent).toContain("Download started"));
     expect(control.disabled).toBe(false);
-    expect(download.mock.instances[0]?.download).toBe("retry.md");
+    expect(downloads).toEqual(["retry.md"]);
   } finally {
     unmount();
     retry.resolve({ data: "", filename: "retry.md", mimeType: "text/markdown" });
