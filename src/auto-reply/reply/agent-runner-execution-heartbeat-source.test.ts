@@ -5,6 +5,7 @@ import type { RunEmbeddedAgentInternalParams } from "../../agents/embedded-agent
 import { createOpenClawToolsAsync } from "../../agents/openclaw-tools.js";
 import { replaceSessionEntry } from "../../config/sessions/session-accessor.sqlite-entry.js";
 import { withSessionTranscriptWriteAssertion } from "../../config/sessions/transcript-write-context.js";
+import { TEST_SCHEDULED_OCCURRENCE } from "../../cron/scheduled-occurrence.test-support.js";
 import {
   createFollowupRun,
   createMinimalRunAgentTurnParams,
@@ -80,6 +81,7 @@ describe.each(["cli", "embedded"] as const)("%s source delivery", (runtime) => {
       });
       if (scheduled) {
         followupRun.run.scheduledAutomation = {
+          occurrence: TEST_SCHEDULED_OCCURRENCE,
           admissionSource: "operator-schedule",
           job: {
             id: "scheduled-source-policy",
