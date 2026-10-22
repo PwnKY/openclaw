@@ -4,7 +4,6 @@ import { createEffect, createMemo, createSignal, createStore, onSettled } from "
 import type {
   PluginsListResult,
   SessionsCatalogListResult,
-  SystemInfoResult,
 } from "../../../../packages/gateway-protocol/src/index.js";
 import type * as Push from "../../../../packages/gateway-protocol/src/schema/push.js";
 import { createChangeListeners } from "../../../../src/shared/listeners.js";
@@ -40,7 +39,6 @@ import { registerSettingsEnglish } from "../../i18n/locales/en-settings.ts";
 import { resolveAgentAvatarUrl } from "../../lib/avatar.ts";
 import { resolveControlUiServerQueueMode } from "../../lib/chat/follow-up-mode.ts";
 import { currentConfigRead } from "../../lib/config/config-state-model.ts";
-import { isMissingOperatorReadScopeError } from "../../lib/gateway-errors.ts";
 import { canCallGatewayMethod } from "../../lib/gateway-methods.ts";
 import { modelSettingPrimary, readModelSetting } from "../../lib/model-setting.ts";
 import { createPageRequest } from "../../lib/page-request.ts";
@@ -48,11 +46,6 @@ import { registerEnglishCatalog, t } from "../../lib/reactive/i18n.ts";
 import { listen } from "../../lib/reactive/listener.ts";
 import { projectOwner, projectSource } from "../../lib/reactive/projection.ts";
 import { resolveScrollBehavior } from "../../lib/scroll-behavior.ts";
-import {
-  canReadSystemInfo,
-  readSystemInfo,
-  SYSTEM_INFO_POLL_INTERVAL_MS,
-} from "../../lib/system-info.ts";
 import { observeRealtimeTalkDevices } from "../chat/talk/input.ts";
 import { createConfigPageModels } from "./config-page-models.ts";
 import {
@@ -124,12 +117,10 @@ export function createConfigPage(
   let connected = false;
   let settings = loadSettings();
   let hiddenSessionCatalogIds = loadStoredHiddenSessionCatalogIds();
-  let systemInfo: SystemInfoResult | null = null;
-  let systemInfoUnavailable = false;
   const observerModels = createConfigPageModels({
     invalidate,
-    requestClient: systemInfoRequestClient,
-    hasSystemInfo: () => systemInfo !== null,
+    gateway: () => context.gateway,
+    active: () => connected && pageId === "appearance",
     selectedAgent: () => context.settingsAgentSelection.state.selectedId,
   });
   let acceptedPluginCatalog: PluginsListResult | null = null;
@@ -175,7 +166,6 @@ export function createConfigPage(
   let previousPhase: string | null = null;
   let requestedPluginsClient: GatewayBrowserClient | null = null;
   let labelsKey = "";
-  let poll: ReturnType<typeof setInterval> | undefined;
   let countdown: ReturnType<typeof setInterval> | undefined;
   let routeInitialized = false;
   let normalizedMemoryLocation = "";
@@ -252,7 +242,6 @@ export function createConfigPage(
   };
 
   function abortRequests() {
-    systemInfoTask.cancel();
     observerModels.retire();
     cancelPlugins();
     cancelLabels();
@@ -275,8 +264,6 @@ export function createConfigPage(
     if (connectionChanged) {
       retireCommands();
       abortRequests();
-      systemInfo = null;
-      systemInfoUnavailable = false;
       observerModels.reset();
       resetConfigViewState();
       updates.reset();
@@ -288,18 +275,7 @@ export function createConfigPage(
     }
     synchronizeRuntimeConfig(context.runtimeConfig);
     settings = customThemeImportOwner.adoptSettings(settings, loadSettings());
-    const client = systemInfoRequestClient();
-    if (!client) {
-      clearInterval(poll);
-      poll = undefined;
-      systemInfoTask.cancel();
-      observerModels.cancel();
-    } else if (connectionChanged || !systemInfo || !poll) {
-      startSystemInfoPolling();
-      void refreshSystemInfo();
-    } else {
-      observerModels.refresh();
-    }
+    observerModels.synchronize();
     syncAppearanceRequests();
     updates.synchronize(pageId);
     const campaign = context.overlays.snapshot.updateSchedule?.campaign;
@@ -342,45 +318,6 @@ export function createConfigPage(
     });
   }
 
-  function startSystemInfoPolling() {
-    clearInterval(poll);
-    poll = setInterval(() => {
-      void refreshSystemInfo();
-    }, SYSTEM_INFO_POLL_INTERVAL_MS);
-  }
-
-  function systemInfoRequestClient(): GatewayBrowserClient | null {
-    if (
-      !connected ||
-      document.visibilityState === "hidden" ||
-      pageId !== "appearance" ||
-      systemInfoUnavailable ||
-      !canReadSystemInfo(context.gateway.snapshot)
-    ) {
-      return null;
-    }
-    return context.gateway.snapshot.client;
-  }
-
-  const systemInfoTask = createPageRequest(invalidate, {
-    task: async (client: GatewayBrowserClient, { signal }) => {
-      const sample = await readSystemInfo(context.gateway, signal);
-      return systemInfoRequestClient() === client ? sample : null;
-    },
-    onComplete: (sample) => {
-      if (sample) {
-        systemInfo = sample.value;
-        startSystemInfoPolling();
-        observerModels.refresh(true);
-      }
-    },
-    onError: (error) => {
-      if (isMissingOperatorReadScopeError(error)) {
-        systemInfo = null;
-        systemInfoUnavailable = true;
-      }
-    },
-  });
   const pluginsTask = createPageRequest(invalidate, {
     task: (client: GatewayBrowserClient, { signal }) => {
       const read = client.request<PluginsListResult>("plugins.list", {}, { signal });
@@ -419,13 +356,6 @@ export function createConfigPage(
   function cancelLabels() {
     labelsTask.cancel();
     setLabelsRead(acceptedLabelsCatalog);
-  }
-
-  async function refreshSystemInfo() {
-    const client = systemInfoRequestClient();
-    if (client && !systemInfoTask.pending) {
-      await systemInfoTask.run(client);
-    }
   }
 
   function syncAppearanceRequests() {
@@ -792,7 +722,7 @@ export function createConfigPage(
         : null,
       sessionObserverEnabled: controlUiConfig?.sessionObserver !== false,
       sessionObserverUtilityModel: modelSettingPrimary(utilityModel),
-      sessionObserverResolvedModel: systemInfo?.defaultAgentUtilityModel,
+      sessionObserverResolvedModel: observerModels.resolvedModel,
       sessionObserverModels: observerModels.models,
       sessionObserverModelsScope: observerModels.scope,
       sessionObserverModelsUnavailable: observerModels.unavailable,
@@ -815,7 +745,7 @@ export function createConfigPage(
           .then(async (saved) => {
             observerResult(saved);
             if (saved && retired === commandLifetime.promise) {
-              await refreshSystemInfo();
+              await observerModels.refreshStatus();
             }
             return saved;
           });
@@ -935,7 +865,6 @@ export function createConfigPage(
       mediaDeviceOwner.retire();
       mediaDeviceWatch?.();
       mediaDeviceWatch = null;
-      clearInterval(poll);
       clearInterval(countdown);
       abortRequests();
       if (scrollFrame !== null) {
