@@ -72,7 +72,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it.each(["start", "connect"])(
+it.each(["start", "connect", "plugins"])(
   "retires the %s config response when the application stops",
   async (entry) => {
     window.history.replaceState({}, "", "/focus/terminal");
@@ -80,33 +80,38 @@ it.each(["start", "connect"])(
     const fetchMock = vi.fn<typeof fetch>(async () => Response.json({ basePath: "" }));
     vi.stubGlobal("fetch", fetchMock);
     runtime = bootstrapApplication();
-    if (entry === "connect") {
+    if (entry !== "start") {
       await runtime.start();
       vi.spyOn(Date, "now").mockReturnValue(Date.now() + 10 * 60_000);
     }
     const previous = runtime.context.config.current;
     const response = createDeferred<Response>();
     fetchMock.mockClear();
-    fetchMock.mockImplementation(() => response.promise);
+    fetchMock.mockImplementation(async () => (await response.promise).clone());
     const refresh = vi.spyOn(runtime.context.config, "refresh");
     if (entry === "start") {
       await runtime.start();
     } else {
-      store.current().testOptions.onHello?.(GATEWAY_STORE_TEST_HELLO);
+      store.current().testOptions.onHello?.({
+        ...GATEWAY_STORE_TEST_HELLO,
+        ...(entry === "plugins" ? { features: { methods: ["plugins.controlUi.list"] } } : {}),
+      });
     }
-    expect(refresh).toHaveBeenCalledOnce();
-    expect(fetchMock).toHaveBeenCalledOnce();
-    const request = refresh.mock.results[0];
-    if (request?.type !== "return") {
-      throw new Error("expected a pending config refresh");
-    }
+    expect(refresh).toHaveBeenCalledTimes(entry === "plugins" ? 2 : 1);
+    const requests = refresh.mock.results.map((request) => {
+      if (request.type !== "return") {
+        throw new Error("expected a pending config refresh");
+      }
+      return request.value;
+    });
     const signal = fetchMock.mock.calls.at(-1)?.[1]?.signal;
 
     runtime.stop();
     response.resolve(Response.json({ basePath: "", serverVersion: "retired-runtime" }));
-    await request.value;
+    await Promise.all(requests);
 
     expect(runtime.context.config.current).toBe(previous);
+    expect(fetchMock).toHaveBeenCalledOnce();
     expect(signal?.aborted).toBe(true);
   },
 );
