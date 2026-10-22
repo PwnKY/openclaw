@@ -96,12 +96,15 @@ it.each(["start", "connect"])(
     }
     expect(refresh).toHaveBeenCalledOnce();
     expect(fetchMock).toHaveBeenCalledOnce();
-    const pending = refresh.mock.results[0].value;
+    const request = refresh.mock.results[0];
+    if (request?.type !== "return") {
+      throw new Error("expected a pending config refresh");
+    }
     const signal = fetchMock.mock.calls.at(-1)?.[1]?.signal;
 
     runtime.stop();
     response.resolve(Response.json({ basePath: "", serverVersion: "retired-runtime" }));
-    await pending;
+    await request.value;
 
     expect(runtime.context.config.current).toBe(previous);
     expect(signal?.aborted).toBe(true);
