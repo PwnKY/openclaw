@@ -281,8 +281,15 @@ DeepSeek's standalone Fetch API. Select it explicitly:
 }
 ```
 
-Local fetching and extraction remain first. Only the existing fallback path calls
-DeepSeek; enabling DeepSeek models or search alone does not enable this paid
+For a one-off explicit provider call without changing saved configuration:
+
+```bash
+openclaw infer web fetch --provider deepseek --url https://example.com/article --json
+```
+
+The CLI flag selects the provider for that command only. The canonical
+`web_fetch` tool keeps local fetching and extraction first. Only the existing
+fallback path calls DeepSeek; enabling DeepSeek models or search alone does not enable this paid
 fetch provider. See [Web Fetch](/tools/web-fetch) for fallback behavior, output
 limits, caching, and cancellation.
 

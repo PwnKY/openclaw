@@ -14,7 +14,9 @@ export function createDeepSeekWebFetchProvider(): WebFetchProviderPlugin {
     createTool: (ctx) => {
       // Inference/search credentials alone must not opt users into paid URL delegation.
       if (
-        normalizeOptionalLowercaseString(ctx.config?.tools?.web?.fetch?.provider) !== "deepseek"
+        normalizeOptionalLowercaseString(
+          ctx.fetchConfig?.provider ?? ctx.config?.tools?.web?.fetch?.provider,
+        ) !== "deepseek"
       ) {
         return null;
       }

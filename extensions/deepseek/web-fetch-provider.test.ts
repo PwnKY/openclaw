@@ -78,6 +78,27 @@ describe("DeepSeek Fetch", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it.each([undefined, "firecrawl"])(
+    "honors command-level DeepSeek selection over saved selection %s without persisting it",
+    async (savedProvider) => {
+      const cfg = config();
+      cfg.tools!.web!.fetch!.provider = savedProvider;
+      const original = structuredClone(cfg);
+      const tool = createDeepSeekWebFetchProvider().createTool({
+        config: cfg,
+        fetchConfig: { ...cfg.tools?.web?.fetch, provider: "deepseek" },
+      });
+      expect(tool).not.toBeNull();
+      const result = await tool!.execute({ url: TARGET });
+      expect(result).toMatchObject({
+        extractor: "deepseek",
+        text: expect.stringContaining("Useful"),
+      });
+      expect(fetchMock.mock.calls[0]?.[0]).toBe(API);
+      expect(cfg).toEqual(original);
+    },
+  );
+
   it("posts only the URL to the official endpoint and returns provider Markdown", async () => {
     const result = await fetchTool().execute({ url: TARGET });
     expect(fetchMock).toHaveBeenCalledOnce();
